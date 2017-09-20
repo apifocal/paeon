@@ -42,20 +42,31 @@ import org.slf4j.LoggerFactory;
 
 public class BrokerSetupTest {
     private static final Logger LOG = LoggerFactory.getLogger(BrokerSetupTest.class);
-    private static final String PAEON_BROKER = "paeon.broker";
+    private static final String PAEON_LOCAL_CFG = "src/test/resources/META-INF/org.apifocal.paeon/paeon-nlp.cfg";
     private static final List<BrokerService> BROKERS = new ArrayList<>();
     private static final int PORT_START = 60616;
+
+	public static final String PAEON_TEST_BROKER = "paeon.test.broker";
+	public static final String PAEON_TEST_USER = "paeon.test.user";
+	public static final String PAEON_TEST_PASSWORD = "paeon.test.password";
+	public static final String PAEON_TEST_REPLYTO = "paeon.test.replyto";
+	public static final String PAEON_TEST_REPEAT = "paeon.test.repeat";
+
+    private static PaeonConfig PAEON_CONFIG;
     private static String brokerUrl;
 
 
     @BeforeClass
     public static void startBroker() throws Exception {
-        // TODO: use Properties for configuring credentials too
-        brokerUrl = System.getenv(PAEON_BROKER);
-        if (brokerUrl == null) {
-            brokerUrl = "nio://localhost:" + PORT_START;
+    	PAEON_CONFIG = new PaeonConfig();
+    	PAEON_CONFIG.setConfigPath(PAEON_LOCAL_CFG);
 
-            createBroker("one");
+        // TODO: use Properties for configuring credentials too
+    	brokerUrl = PAEON_CONFIG.getProperty(PaeonConfig.PAEON_CFG_BROKER, "nio://localhost:" + PORT_START);
+        String testBroker = PAEON_CONFIG.getProperty(PAEON_TEST_BROKER);
+        if (testBroker != null) {
+            createBroker(testBroker);
+            // createBroker("one");
             // createBroker("two");
         }
     }
@@ -71,28 +82,35 @@ public class BrokerSetupTest {
 
  
     @Test
-    public void testSetup() throws Exception {
+    public void testMultipleRequests() throws Exception {
         final List<String> msgs = new ArrayList<>();
 
-        // Test destination fencing
+        String cu = PAEON_CONFIG.getProperty(PaeonConfig.PAEON_CFG_USER, "apollo");
+        String cs = PAEON_CONFIG.getProperty(PaeonConfig.PAEON_CFG_PASSWORD, "password");
+        String lq = PAEON_CONFIG.getProperty(PaeonConfig.PAEON_CFG_LISTENON, "paeon.nlp.ctakes");
+        
         ConnectionFactory fc =  new ActiveMQConnectionFactory(brokerUrl);
-        Connection consumerConnection = fc.createConnection("apollo", "password");
+        Connection consumerConnection = fc.createConnection(cu, cs);
         Session consumerSession = consumerConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        Destination q = consumerSession.createQueue("Stocks");
+        Destination q = consumerSession.createQueue(lq);
         MessageConsumer consumer = consumerSession.createConsumer(q);
         consumer.setMessageListener(new PaeonMessageListener(consumerSession));
         consumerConnection.start();
 
+        String pu = PAEON_CONFIG.getProperty(PAEON_TEST_USER, "artemis");
+        String ps = PAEON_CONFIG.getProperty(PAEON_TEST_PASSWORD, "secret");
+        String rt = PAEON_CONFIG.getProperty(PAEON_TEST_REPLYTO, "ctakes.replies");
+
         ConnectionFactory fp =  new ActiveMQConnectionFactory(brokerUrl);
-        Connection producerConnection = fp.createConnection("artemis", "secret");
+        Connection producerConnection = fp.createConnection(pu, ps);
         Session producerSession = producerConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        Destination r = producerSession.createQueue("Reply");
+        Destination r = producerSession.createQueue(rt);
         MessageProducer producer = producerSession.createProducer(q);
         MessageConsumer replies = producerSession.createConsumer(r);
         replies.setMessageListener(new MessageListener() {
             public void onMessage(Message message) {
-                LOG.debug("PING");
                 try {
+                    LOG.debug("NLP Reply received: '{}'", message.getJMSMessageID());
                     if (message instanceof TextMessage) {
                         TextMessage tm = (TextMessage)message;
                         msgs.add(tm.getText());
@@ -104,22 +122,29 @@ public class BrokerSetupTest {
         });
         producerConnection.start();
 
-        Message message = producerSession.createTextMessage("Complex provider note...");
-        message.setJMSCorrelationID("1234");
-        message.setJMSReplyTo(r);
-        producer.send(message);
-        Thread.sleep(2000);
+        try {
+            String repeat = PAEON_CONFIG.getProperty(PAEON_TEST_REPEAT, "100");
+            int count = Integer.valueOf(repeat);
 
-        Assert.assertEquals(1, msgs.size());
-        Assert.assertNotNull(msgs.get(0));
-        Assert.assertTrue(msgs.get(0).contains("result"));
+            for (int i = 0; i < count; i++) {
+                Message message = producerSession.createTextMessage("Complex provider note...");
+                message.setJMSCorrelationID("CID-" + i);
+                message.setJMSReplyTo(r);
+                producer.send(message);
+            }
+            Thread.sleep(2000);
 
-        producerConnection.stop();
-        consumerConnection.stop();
+            Assert.assertEquals(count, msgs.size());
+            Assert.assertNotNull(msgs.get(0));
+            Assert.assertTrue(msgs.get(0).contains("result"));
+        } finally {
+            producerConnection.stop();
+            consumerConnection.stop();
+        }
     }
 
     public static BrokerService createBroker(String name) throws Exception {
-        BrokerService b = BrokerFactory.createBroker("xbean:META-INF/org/apache/activemq/" + name + ".xml");
+        BrokerService b = BrokerFactory.createBroker("xbean:META-INF/org.apache.activemq/" + name + ".xml");
         if (!name.equals(b.getBrokerName())) {
             LOG.warn("Broker name mismatch; expecting '{}', found '{}'). Check configuration.", name, b.getBrokerName());
             return null;
