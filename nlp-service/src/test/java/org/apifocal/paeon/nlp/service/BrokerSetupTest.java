@@ -42,14 +42,22 @@ import org.slf4j.LoggerFactory;
 
 public class BrokerSetupTest {
     private static final Logger LOG = LoggerFactory.getLogger(BrokerSetupTest.class);
+    private static final String PAEON_BROKER = "paeon.broker";
     private static final List<BrokerService> BROKERS = new ArrayList<>();
     private static final int PORT_START = 60616;
+    private static String brokerUrl;
 
 
     @BeforeClass
     public static void startBroker() throws Exception {
-        createBroker("one");
-        // createBroker("two");
+        // TODO: use Properties for configuring credentials too
+        brokerUrl = System.getenv(PAEON_BROKER);
+        if (brokerUrl == null) {
+            brokerUrl = "nio://localhost:" + PORT_START;
+
+            createBroker("one");
+            // createBroker("two");
+        }
     }
 
     @AfterClass
@@ -64,12 +72,10 @@ public class BrokerSetupTest {
  
     @Test
     public void testSetup() throws Exception {
-        Assert.assertTrue(BROKERS.size() > 0);
-
         final List<String> msgs = new ArrayList<>();
 
         // Test destination fencing
-        ConnectionFactory fc =  new ActiveMQConnectionFactory("tcp://localhost:" + PORT_START);
+        ConnectionFactory fc =  new ActiveMQConnectionFactory(brokerUrl);
         Connection consumerConnection = fc.createConnection("apollo", "password");
         Session consumerSession = consumerConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         Destination q = consumerSession.createQueue("Stocks");
@@ -77,25 +83,24 @@ public class BrokerSetupTest {
         consumer.setMessageListener(new PaeonMessageListener(consumerSession));
         consumerConnection.start();
 
-        ConnectionFactory fp =  new ActiveMQConnectionFactory("tcp://localhost:" + (PORT_START));
+        ConnectionFactory fp =  new ActiveMQConnectionFactory(brokerUrl);
         Connection producerConnection = fp.createConnection("artemis", "secret");
         Session producerSession = producerConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         Destination r = producerSession.createQueue("Reply");
         MessageProducer producer = producerSession.createProducer(q);
         MessageConsumer replies = producerSession.createConsumer(r);
         replies.setMessageListener(new MessageListener() {
-			public void onMessage(Message message) {
-				LOG.debug("PING");
-				try {
-			        if (message instanceof TextMessage) {
-	                    TextMessage tm = (TextMessage)message;
-	                    msgs.add(tm.getText());
-						LOG.debug("Paeon MessageListener text received: '{}'", tm.getText());
-			        }
-				} catch (JMSException e) {
-	            }
-			}
-        	
+            public void onMessage(Message message) {
+                LOG.debug("PING");
+                try {
+                    if (message instanceof TextMessage) {
+                        TextMessage tm = (TextMessage)message;
+                        msgs.add(tm.getText());
+                        LOG.debug("Paeon MessageListener text received: '{}'", tm.getText());
+                    }
+                } catch (JMSException e) {
+                }
+            }
         });
         producerConnection.start();
 
