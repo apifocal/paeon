@@ -64,6 +64,7 @@
     </properties>
 
     <modules>
+        <module>nlp-camel</module>
         <module>nlp-service</module>
     </modules>
 
