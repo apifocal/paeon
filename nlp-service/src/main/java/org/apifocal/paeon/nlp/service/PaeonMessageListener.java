@@ -36,9 +36,15 @@ public class PaeonMessageListener implements MessageListener {
 	private final Session session;
 	private final MessageProducer producer;
 
+	private final NLPProcessor nlpProcessor;
+
 	public PaeonMessageListener(Session session) throws JMSException {
 		this.session = session;
 		this.producer = session.createProducer(null); // TODO or maybe a configurable DLQ
+
+		// initialize NLP processor
+		this.nlpProcessor = new CtakesProcessor();
+		nlpProcessor.initializePipeline();
 	}
 
 	@Override
@@ -52,7 +58,7 @@ public class PaeonMessageListener implements MessageListener {
 
 	        	LOG.debug("Paeon MessageListener text received '{}'", content);
 	        	// TODO: pass it onto cTakes processor (careful, could be null)
-	        	result = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><result/>";
+	        	result = nlpProcessor.process(content);
 	        }
 
 			Destination rt = message.getJMSReplyTo();
