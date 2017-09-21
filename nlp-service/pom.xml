@@ -125,7 +125,7 @@
                 <artifactId>activemq-maven-plugin</artifactId>
                 <version>${activemq.version}</version>
                 <configuration>
-                    <configUri>xbean:file:src/test/resources/META-INF/org/apache/activemq/one.xml</configUri>
+                    <configUri>xbean:file:src/test/resources/META-INF/org.apache.activemq/one.xml</configUri>
                     <fork>false</fork>
                     <systemProperties>
                         <!-- property>

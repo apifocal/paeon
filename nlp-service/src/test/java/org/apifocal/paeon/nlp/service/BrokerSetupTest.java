@@ -46,11 +46,11 @@ public class BrokerSetupTest {
     private static final List<BrokerService> BROKERS = new ArrayList<>();
     private static final int PORT_START = 60616;
 
-	public static final String PAEON_TEST_BROKER = "paeon.test.broker";
-	public static final String PAEON_TEST_USER = "paeon.test.user";
-	public static final String PAEON_TEST_PASSWORD = "paeon.test.password";
-	public static final String PAEON_TEST_REPLYTO = "paeon.test.replyto";
-	public static final String PAEON_TEST_REPEAT = "paeon.test.repeat";
+    public static final String PAEON_TEST_BROKER = "paeon.test.broker";
+    public static final String PAEON_TEST_USER = "paeon.test.user";
+    public static final String PAEON_TEST_PASSWORD = "paeon.test.password";
+    public static final String PAEON_TEST_REPLYTO = "paeon.test.replyto";
+    public static final String PAEON_TEST_REPEAT = "paeon.test.repeat";
 
     private static PaeonConfig PAEON_CONFIG;
     private static String brokerUrl;
@@ -58,11 +58,14 @@ public class BrokerSetupTest {
 
     @BeforeClass
     public static void startBroker() throws Exception {
-    	PAEON_CONFIG = new PaeonConfig();
-    	PAEON_CONFIG.setConfigPath(PAEON_LOCAL_CFG);
+        PAEON_CONFIG = new PaeonConfig();
+        if (PAEON_CONFIG.getConfigPath() == null) {
+            LOG.info("No Paeon configuration found. Using test local config");
+            PAEON_CONFIG.setConfigPath(PAEON_LOCAL_CFG);
+        }
 
         // TODO: use Properties for configuring credentials too
-    	brokerUrl = PAEON_CONFIG.getProperty(PaeonConfig.PAEON_CFG_BROKER, "nio://localhost:" + PORT_START);
+        brokerUrl = PAEON_CONFIG.getProperty(PaeonConfig.PAEON_CFG_BROKER, "nio://localhost:" + PORT_START);
         String testBroker = PAEON_CONFIG.getProperty(PAEON_TEST_BROKER);
         if (testBroker != null) {
             createBroker(testBroker);
