@@ -127,10 +127,10 @@ public class CtakesProcessor implements NLPProcessor {
 
         } catch (MalformedURLException e) {
             // FIXME: don't ignore forever
-            LOG.error("Failed to create LVG Annotator: '{}'", e.getMessage());
+            LOG.error("Failed to create LVG Annotator: '{}'", e);
         } catch (ResourceInitializationException e) {
             // FIXME: don't ignore forever
-            LOG.error("Failed to create Annotator: '{}'", e.getMessage());
+            LOG.error("Failed to create Annotator: '{}'", e);
         }
 
         return builder;
@@ -155,6 +155,7 @@ public class CtakesProcessor implements NLPProcessor {
             defaultPipeline = createAnalysisEngineBuilder().createAggregate();
         } catch (ResourceInitializationException e) {
             // FIXME: don't ignore forever
+            LOG.error("Failed initilizing Pipeline ...", e);
             defaultPipeline = null;
         }
     }
