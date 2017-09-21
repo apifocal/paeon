@@ -29,6 +29,7 @@ import org.apache.ctakes.typesystem.type.textspan.Sentence;
 import org.apache.uima.analysis_engine.AnalysisEngine;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.impl.XmiCasSerializer;
+import org.apache.uima.collection.base_cpm.CasObjectProcessor;
 import org.apache.uima.fit.factory.AggregateBuilder;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
 import org.apache.uima.fit.util.JCasUtil;
@@ -58,7 +59,11 @@ public class CtakesProcessor implements NLPProcessor {
     private static final String OUTPUT_TYPE_PRETTY = "pretty";
 
     // Reuse the pipeline for demo purposes
-    private AnalysisEngine defaultPipeline;
+    private AnalysisEngine defaultPipeline = null;
+
+    public CtakesProcessor() {
+        initializePipeline();
+    }
 
     /**
      * Creates an aggregated AnalysisEngine Builder for the NLP Pipeline
@@ -150,10 +155,11 @@ public class CtakesProcessor implements NLPProcessor {
             defaultPipeline = createAnalysisEngineBuilder().createAggregate();
         } catch (ResourceInitializationException e) {
             // FIXME: don't ignore forever
+            defaultPipeline = null;
         }
     }
 
-    private AnalysisEngine getPipeline() {
+    public AnalysisEngine getPipeline() {
         return defaultPipeline;
     }
 

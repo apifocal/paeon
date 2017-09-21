@@ -44,7 +44,6 @@ public class PaeonMessageListener implements MessageListener {
 
 		// initialize NLP processor
 		this.nlpProcessor = new CtakesProcessor();
-		nlpProcessor.initializePipeline();
 	}
 
 	@Override
