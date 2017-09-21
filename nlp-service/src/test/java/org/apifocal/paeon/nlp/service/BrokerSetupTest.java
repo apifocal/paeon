@@ -130,6 +130,7 @@ public class BrokerSetupTest {
             int count = Integer.valueOf(repeat);
 
             for (int i = 0; i < count; i++) {
+                // TODO: add the doctor's note
                 Message message = producerSession.createTextMessage("Complex provider note...");
                 message.setJMSCorrelationID("CID-" + i);
                 message.setJMSReplyTo(r);
