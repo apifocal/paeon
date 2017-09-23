@@ -14,7 +14,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<project 
+<project
     xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation=
@@ -29,7 +29,7 @@
 
     <groupId>org.apifocal.paeon.nlp</groupId>
     <artifactId>paeon-nlp-camel</artifactId>
-    
+
     <name>Paeon - NLP - Camel Client</name>
     <description>Camel based client for the NLP Service</description>
 
@@ -97,10 +97,12 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>${exec-maven.version}</version>
+                <version>${exec-maven-plugin.version}</version>
                 <configuration>
                     <mainClass>${target.main.class}</mainClass>
                     <commandlineArgs>${target.cmd.args}</commandlineArgs>
+                    <!-- TODO: once PR-2 github:apifocal/apifocal-parent is
+                      accepted next line can be removed -->
                     <includePluginDependencies>false</includePluginDependencies>
                 </configuration>
             </plugin>
@@ -117,5 +119,5 @@
             </properties>
         </profile>
     </profiles>
- 
+
 </project>
