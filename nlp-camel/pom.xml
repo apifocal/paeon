@@ -33,6 +33,10 @@
     <name>Paeon - NLP - Camel Client</name>
     <description>Camel based client for the NLP Service</description>
 
+    <properties>
+        <exec-maven.version>1.6.0</exec-maven.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -93,6 +97,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec-maven.version}</version>
                 <configuration>
                     <mainClass>${target.main.class}</mainClass>
                     <commandlineArgs>${target.cmd.args}</commandlineArgs>
